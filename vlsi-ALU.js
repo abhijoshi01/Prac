@@ -1,51 +1,30 @@
 code-----
 
 
-LIBRARY IEEE;
+library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-entity USR_3039 is
-Port ( Si : in STD_LOGIC;
-Pi : in STD_LOGIC_VECTOR(7 downto 0);
-Rst : in STD_LOGIC;
-Clk : in STD_LOGIC;
-Mode : in STD_LOGIC_VECTOR(1 downto 0);
-So : out STD_LOGIC;
-Po : out STD_LOGIC_VECTOR(7 downto 0));
-end USR_3039;
-architecture Behavioral of USR_3039 is
-Signal temp:STD_LOGIC_VECTOR(7 downto 0);
+use IEEE.STD_LOGIC_Unsigned.ALL;
+entity ALU_3039 is
+Port ( a : in STD_LOGIC_VECTOR (3 downto 0);
+b : in STD_LOGIC_VECTOR (3 downto 0);
+sel : in STD_LOGIC_VECTOR (2 downto 0);
+y : out STD_LOGIC_VECTOR (3 downto 0));
+end ALU_3039;
+architecture Behavioral of ALU_3039 is
 begin
-Process(Clk,Rst)
+process (a,b,sel)
 begin
-if (Rst=&#39;1&#39;)then
-temp&lt;=&quot;00000000&quot;;
-elsif(Clk&#39;event AND clk =&#39;1&#39;) then
-case mode is
-when &quot;00&quot;=&gt;
-temp(7)&lt;=Si;
-
-temp(6 downto 0)&lt;= temp(7 downto 1);
-
-So&lt;=temp(0);
-
-when &quot;01&quot;=&gt;
-temp &lt;=Pi;
-
-temp(6 downto 0)&lt;= temp(7 downto 1);
-So&lt;=temp(0);
-
-when &quot;10&quot;=&gt;
-temp(7)&lt;=Si;
-
-temp(6 downto 0)&lt;= temp(7 downto 1);
-Po &lt;=temp ;
-
-when &quot;11&quot;=&gt;
-Po&lt;=Pi;
-When others =&gt;
-temp&lt;=&quot;00000000&quot;;
+case sel is
+when &quot;000&quot;=&gt;y&lt;=a+b;
+when &quot;001&quot;=&gt;y&lt;=a-b;
+when &quot;010&quot;=&gt;y&lt;=a;
+when &quot;011&quot;=&gt;y&lt;=a+1;
+when &quot;100&quot;=&gt;y&lt;=a nand b;
+when &quot;101&quot;=&gt;y&lt;=a nor b;
+when &quot;110&quot;=&gt;y&lt;=a xor b;
+when &quot;111&quot;=&gt;y&lt;=a or b;
+when others =&gt;y&lt;=&quot;0000&quot;;
 end case;
-end if;
 end process;
 end Behavioral;
 
@@ -57,76 +36,57 @@ test------
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
-ENTITY us_testbench IS
-END us_testbench;
-ARCHITECTURE behavior OF us_testbench IS 
-    COMPONENT USR_3039
-    PORT(
-         Si : IN  std_logic;
-         Pi : IN  std_logic_vector(7 downto 0);
-         Mode : IN  std_logic_vector(1 downto 0);
-         Rst : IN  std_logic;
-         Clk : IN  std_logic;
-         So : OUT  std_logic;
-         Po : OUT  std_logic_vector(7 downto 0)
-        );
-    END COMPONENT;
-   --Inputs
-   signal Si : std_logic := '0';
-   signal Pi : std_logic_vector(7 downto 0) := (others => '0');
-   signal Mode : std_logic_vector(1 downto 0) := (others => '0');
-   signal Rst : std_logic := '0';
-   signal Clk : std_logic := '0';
---Outputs
-   signal So : std_logic;
-   signal Po : std_logic_vector(7 downto 0);
-   -- Clock period definitions
-   constant Clk_period : time := 10 ns;
+ENTITY ALU_test IS
+END ALU_test;
+ARCHITECTURE behavior OF ALU_test IS
+COMPONENT ALU_3039
+PORT(
+a : IN std_logic_vector(3 downto 0);
+b : IN std_logic_vector(3 downto 0);
+sel : IN std_logic_vector(2 downto 0);
+y : OUT std_logic_vector(3 downto 0)
+);
+END COMPONENT;
+signal a : std_logic_vector(3 downto 0) := (others =&gt; &#39;0&#39;);
+signal b : std_logic_vector(3 downto 0) := (others =&gt; &#39;0&#39;);
+
+signal sel : std_logic_vector(2 downto 0) := (others =&gt; &#39;0&#39;);
+signal y : std_logic_vector(3 downto 0);
 BEGIN
-	-- Instantiate the Unit Under Test (UUT)
-   uut: USR_3039 PORT MAP (
-          Si => Si,
-          Pi => Pi,
-          Mode => Mode,
-          Rst => Rst,
-    Clk => Clk,
-          So => So,
-          Po => Po);
-  -- Clock process definitions
-   Clk_process :process
-   begin
-		Clk <= '0';
-		wait for Clk_period/2;
-		Clk <= '1';
-		wait for Clk_period/2;
-   end process;
-  -- Stimulus process
-   stim_proc: process
-   begin		
-      -- hold reset state for 100 ns.
-      wait for 100 ns;	
-		Rst<='1';
-		wait for 10 ns;
-      Rst<='0';
-		Mode<="00";
-		Si<='1';
-		wait for 10 ns;
-		Rst<='0';
-		Mode<="00";
-		Si<='0';
-		wait for 80 ns;
-		Rst<='0';
-		Mode<="10";
-		Pi<="10101010";
-		wait for 100 ns;
-      Rst<='1';	
-      wait for 10 ns;
-		Rst<='0';
-		Mode<="11";
-		Pi<="11001100";
-		wait for 80 ns;
-wait for Clk_period*10;
-      -- insert stimulus here 
-wait;
-   end process;
+uut: ALU_3039 PORT MAP (
+a =&gt; a,
+b =&gt; b,
+sel =&gt; sel,
+y =&gt; y
+);
+stim_proc: process
+begin
+a&lt;=&quot;0100&quot;;
+b&lt;=&quot;0011&quot;;
+sel&lt;=&quot;000&quot;;
+wait for 100 ns; a&lt;=&quot;0100&quot;;
+b&lt;=&quot;0011&quot;;
+sel&lt;=&quot;001&quot;;
+wait for 100 ns a&lt;=&quot;0100&quot;;
+b&lt;=&quot;0011&quot;;
+sel&lt;=&quot;010&quot;;
+wait for 100 ns; a&lt;=&quot;0100&quot;;
+b&lt;=&quot;0011&quot;;
+sel&lt;=&quot;011&quot;;
+wait for 100 ns; a&lt;=&quot;0100&quot;;
+b&lt;=&quot;0011&quot;;
+sel&lt;=&quot;100&quot;;
+wait for 100 ns; a&lt;=&quot;0100&quot;;
+b&lt;=&quot;0011&quot;;
+
+sel&lt;=&quot;101&quot;;
+wait for 100 ns; a&lt;=&quot;0100&quot;;
+b&lt;=&quot;0011&quot;;
+sel&lt;=&quot;110&quot;;
+wait for 100 ns; a&lt;=&quot;0100&quot;;
+b&lt;=&quot;0011&quot;;
+sel&lt;=&quot;111&quot;;
+
+wait for 100 ns;
+end process;
 END;
